@@ -5,15 +5,26 @@ import time
 from os import path as osp
 from .utils import get_features, load_json, pjoin, save_params, to_numpy
 
+PREDICATE = 0
+VARIABLES = 1
+
 def check_decompositions(bc_list, decompositions_dict, count={}):
-    for e in bc_list:
-        body = ','.join(e)
-        
-        if body not in decompositions_dict:
-            decompositions_dict[body] = f'L{len(decompositions_dict)+1}'
-            count[decompositions_dict[body]] = 1
-        else:
-            count[decompositions_dict[body]] += 1
+    variables_set = {}
+    for bc in bc_list:
+        for lit in bc:
+            # Get variables
+            var_l = lit.replace(')', '').split('(')[1].split(',')
+            var = var_l[:]
+            var.sort()
+            var = ','.join(var)
+
+            if var not in variables_set:
+                # Save to dictionary with their corresponding predicate
+                variables_set[var] = [(lit.split('(')[0], var_l)]
+            else:
+                variables_set[var].append((lit.split('(')[0], var_l))
+    print(variables_set)
+    
     return decompositions_dict, count
 
 def generate_bcp(decompositions, h_arity):
@@ -45,9 +56,7 @@ def run_semi_prop(data_dir, h_arity, cached=True, print_output=False):
     rules = generate_bcp(decompositions, h_arity)
     # Generate new bottom clauses using decompositions
 
-    print(decompositions)
-    print(rules)
-    KSOAPKSOPAKSOPAKSOPAKS
+
     
     decompositions, count = check_decompositions(examples_dict['neg'], decompositions, count)
     
