@@ -28,7 +28,7 @@ def main(args):
                  use_semi_prop=args.use_semi_prop,
                  h_arity=args.h_arity)
     model.init_data()
-    model.run_cv(args.trepan, args.draw)
+    #model.run_cv(args.trepan, args.draw)
 
 
 if __name__ == '__main__':
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     PARSER.add_argument('--dedup', action='store_true')
     PARSER.add_argument('--max-epochs', type=int, default=10)
     PARSER.add_argument('--n-splits', type=int, default=5)
-    PARSER.add_argument('--use-semi-prop', type=bool, default=False)
+    PARSER.add_argument('--use-semi-prop', action='store_true') 
     PARSER.add_argument('--h-arity', type=int, default=2)
 
     ARGS = PARSER.parse_args()

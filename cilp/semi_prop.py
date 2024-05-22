@@ -1,64 +1,103 @@
-import json
 import re
-import tempfile
-import time
+import json
 from os import path as osp
-from .utils import get_features, load_json, pjoin, save_params, to_numpy
+from .utils import load_json, pjoin
 
-PREDICATE = 0
-VARIABLES = 1
+def get_literals(clause: str) -> list:
+    '''
+        Split literals in the body of the bottom clause given as parameter
+    '''
+    return re.split(',\s*(?![^()]*\))', clause.split(':-')[1].strip())
 
-def check_decompositions(bc_list, decompositions_dict, count={}):
-    variables_set = {}
-    for bc in bc_list:
-        for lit in bc:
-            # Get variables
-            var_l = lit.replace(')', '').split('(')[1].split(',')
-            var = var_l[:]
-            var.sort()
-            var = ','.join(var)
+def get_vars(literal: str) -> list:
+    '''
+        Split and returns all variables from a literal
+    '''
+    return [var for var in re.search('\(([\w\d][,\w\d]*)\)', literal).group(1).split(',') if var.istitle()]
 
-            if var not in variables_set:
-                # Save to dictionary with their corresponding predicate
-                variables_set[var] = [(lit.split('(')[0], var_l)]
-            else:
-                variables_set[var].append((lit.split('(')[0], var_l))
-    print(variables_set)
+def update_local_variables(vars: list, global_variables: list) -> list:
+    '''
+        Returns all variables from a literal that are NOT global variables
+    '''
+    return list(set(vars) - set(global_variables))
+
+def build_first_order_features(rules: list, global_variables: list, features: dict = {}) -> list:
+    '''
+        Returns a list of first-order features
+    '''
+
+    features = {}
+    semi_bc = []
+
+    #print(rules)
     
-    return decompositions_dict, count
+    str_global_variables = ','.join(global_variables)
+    for rule in rules:
+        str_rule = ','.join(rule)
+        if str_rule not in features:
+            features[str_rule] = f'L_{str(len(features) + 1)}({str_global_variables})'
+        semi_bc.append(features[str_rule])
+    return semi_bc, features
 
-def generate_bcp(decompositions, h_arity):
-    letter_A = ord('A')
-    decompositions_clauses = decompositions.values()
-    h_args = ','.join([chr(letter_A+i) for i in range(0,h_arity)])
 
-    return [d + '(' + h_args + ')' for d in decompositions_clauses]
-
-def run_semi_prop(data_dir, h_arity, cached=True, print_output=False):
-    print('Running Semi-Propositionalization')
+def run_semi_prop(data_dir: str, arity: int, cached=False, print_output=False) -> list:
+    print('Running Semi-Prop')
     bc_file = pjoin(data_dir, 'bc_filtered.json')
+    features_file = pjoin(data_dir, 'features.json')
     if osp.exists(bc_file) and cached:
         print('Loading from cache')
         return
+    else:
+        bottom_clauses = load_json(pjoin(data_dir, 'bc.json'))
+
+    global_variables = list(map(chr, range(ord('A'), ord('A')+arity)))
     
-    examples_dict = load_json(pjoin(data_dir, 'bc.json'))
+    f_bc, features = {}, {}
 
-    n_positives_examples, n_negative_examples = len(examples_dict['pos']), len(examples_dict['neg'])
-    print(f"Loaded {len(examples_dict['pos'])} pos examples")
-    print(f"Loaded {len(examples_dict['neg'])} neg examples")
+    for posneg in ['pos', 'neg']:
+        f_bc[posneg] = []
+        rules = []
+        features[posneg] = []
 
-    # Create variables to store decompositions
-    decompositions = {}
-    count = {}
+        for bc in bottom_clauses[posneg]:
+            
+            local_variables = []
+            current_rule = []
 
-    # Filter positive examples
-    decompositions, count = check_decompositions(examples_dict['pos'], decompositions, count)
-    rules = generate_bcp(decompositions, h_arity)
-    # Generate new bottom clauses using decompositions
+            #literals = get_literals(bc)
+            literals = bc[:]
 
+            i = 0
+            while i < len(literals):
 
+                vars = get_vars(literals[i])
+
+                allGlobalVars = all([var in global_variables for var in vars])
+
+                canBeSharedVariables = [var for var in vars if var not in global_variables]
+                sharesVariables = any([var in local_variables for var in canBeSharedVariables])
+
+                if allGlobalVars or (not local_variables and not current_rule) or sharesVariables:
+                    current_rule.append(literals[i])
+                    local_variables += update_local_variables(vars, global_variables)
+                    local_variables = list(set(local_variables))
+                    literals.pop(i)
+                else:
+                    i += 1
+
+                if i >= len(literals):
+                    rules.append(current_rule)
+                    current_rule = []
+                    local_variables = []
+                    i = 0
+            
+            new_rule, features = build_first_order_features(rules, global_variables, features)
+            f_bc[posneg].append(new_rule)
+            del new_rule
+            break
+
+    with open(bc_file, 'w') as f:
+        json.dump(f_bc, f, indent=4)
     
-    decompositions, count = check_decompositions(examples_dict['neg'], decompositions, count)
-    
-
-
+    with open(features_file, 'w') as f:
+        json.dump(features, f, indent=4)
