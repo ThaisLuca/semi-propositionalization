@@ -16,7 +16,7 @@ from tqdm import tqdm, trange
 from .bcp import run_bcp
 from .trepan import Trepan
 from .semi_prop import run_semi_prop
-from .utils import get_features, load_json, pjoin, save_params, to_numpy
+from .utils import get_features, load_json, pjoin, save_params, to_numpy, mrmr
 
 
 def tng_step(data_loader, model, criterion, optimizer):
@@ -142,6 +142,8 @@ class CILP:
                  progress_bar=False,
                  use_semi_prop=False,
                  h_arity=None):
+                 #test=False,
+                 #sampling_rate=None):
         self.cached = cached
         self.data_dir = data_dir
         self.log_dir = log_dir
@@ -154,6 +156,8 @@ class CILP:
         self.progress_bar = progress_bar
         self.use_semi_prop = use_semi_prop
         self.h_arity = h_arity
+        #self.test = test
+        #self.sampling_rate = sampling_rate
 
         self.X = None
         self.y = None
@@ -187,6 +191,7 @@ class CILP:
             bcp_features = npzfile['bcp_features']
         else:
             examples, bcp_features = get_features(bcp_examples, n_positives_examples, n_negative_examples)
+            examples = mrmr(examples, n_positives_examples, n_negative_examples, features_rate=0.1)
             np.savez(feats_file, examples=examples, bcp_features=bcp_features)
 
         self.bcp_features = bcp_features
@@ -216,6 +221,9 @@ class CILP:
         if self.use_semi_prop:
             self.semi_prop()
         self.featurise()
+    
+    def test(self):
+        print('IT WORKED')
 
     def train(self, tng_idx, val_idx, with_trepan=False, draw=False):
         X_tng = self.X[tng_idx]

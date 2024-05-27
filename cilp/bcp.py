@@ -1,4 +1,5 @@
 import json
+import math
 import re
 import tempfile
 import time
@@ -23,10 +24,28 @@ def run_bcp(data_dir, cached=True, print_output=False):
         bk_file = pjoin(data_dir, 'bk.pl')
         mode_file = pjoin(data_dir, 'mode.pl')
 
-        script_lines = aleph_settings(mode_file, bk_file, data_files={'train_pos': train_pos})
+        #if test:
+        #    split_index = math.floor(len(train_pos)*sampling_rate)
+        #    train_pos, test_pos = train_pos[:split_index], train_pos[split_index:]
+        #    pos_examples, pos_examples_test = pos_examples[:split_index], pos_examples[split_index:]
+
+        #    train_pos, test_pos = pjoin(data_dir, 'bc_train.pl'), pjoin(data_dir, 'bc_test.pl')
+        #    write_examples(pos_examples, train_pos)
+        #    write_examples(pos_examples_test, test_pos)
+        
+        data_files={'train_pos': train_pos}
+
+        #if test:
+        #    data_files['test_pos'] = test_pos
+
+        script_lines = aleph_settings(mode_file, bk_file, data_files=data_files)
         # script_lines += [f':- set(train_pos, "{train_pos}").']
         for i in range(len(pos_examples)):
             script_lines += [f':- sat({i+1}).']
+
+        #if test:
+        #    test_file = data_files['test_pos']
+        #    script_lines += [f':- test("{test_file}, false").']
 
         temp_dir = tempfile.mkdtemp()
         script_file = create_script(temp_dir, script_lines)

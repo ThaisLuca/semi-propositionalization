@@ -8,11 +8,31 @@ import time
 from functools import partial
 from multiprocessing import Pool
 from os import path as osp
+import pandas as pd
+import pymrmr
 
 import numpy as np
 import pandas as pd
 import torch
+import math
 
+
+def mrmr(features, n_positive_examples, n_negative_examples, features_rate=1):
+    
+    print('Perform MRMR')
+    
+    stack_y_pos, stack_y_neg = np.zeros(n_positive_examples), np.ones(n_negative_examples)
+    stack_x, stack_y = np.column_stack((stack_y_pos, features[:n_positive_examples])), np.column_stack((stack_y_neg, features[n_positive_examples:]))
+
+    f_features = np.concatenate((stack_x, stack_y), axis=0)
+
+    columns = [f'col{i}' for i in range(f_features.shape[1]-1)]
+    columns.insert(0, 'class')
+    df = pd.DataFrame(f_features, columns=columns)
+
+    res = pymrmr.mRMR(df, 'MIQ', math.floor(df.shape[0]*features_rate))
+
+    return df[res].to_numpy()
 
 def save_params(log_dir, params):
     params_id = get_dict_hash(params)
@@ -53,6 +73,7 @@ def aleph_settings(mode_file, bk_file, data_files={}):
         script_lines += [f':- set({set_name}, "{data_file}").']
     script_lines += [f':- read_all("{mode_file}").']
     script_lines += [f':- read_all("{bk_file}").']
+
     return script_lines
 
 

@@ -9,6 +9,12 @@ def get_literals(clause: str) -> list:
     '''
     return re.split(',\s*(?![^()]*\))', clause.split(':-')[1].strip())
 
+def get_list_of_predicates(clause: list) -> list:
+    '''
+        Return string of predicates
+    '''
+    return re.sub(r'\([^)]*\)', '', clause)
+
 def get_vars(literal: str) -> list:
     '''
         Split and returns all variables from a literal
@@ -21,21 +27,30 @@ def update_local_variables(vars: list, global_variables: list) -> list:
     '''
     return list(set(vars) - set(global_variables))
 
+def is_redudant(features: list, rule: str, global_variables: list) -> list:
+    '''
+        Check if BC is redudant
+    '''
+    #rule_literals
+    #for f in features:
+        
+
+    return 0
+
 def build_first_order_features(rules: list, global_variables: list, features: dict = {}) -> list:
     '''
         Returns a list of first-order features
     '''
 
-    features = {}
     semi_bc = []
 
     #print(rules)
     
     str_global_variables = ','.join(global_variables)
     for rule in rules:
-        str_rule = ','.join(rule)
-        if str_rule not in features:
-            features[str_rule] = f'L_{str(len(features) + 1)}({str_global_variables})'
+        str_rule = ','.join(rule) # and not is_redudant(features, rule, global_variables)
+        if str_rule not in features :
+            features[str_rule] = f"L_{str(len(features) + 1)}({str_global_variables})"
         semi_bc.append(features[str_rule])
     return semi_bc, features
 
@@ -54,15 +69,16 @@ def run_semi_prop(data_dir: str, arity: int, cached=False, print_output=False) -
     
     f_bc, features = {}, {}
 
-    for posneg in ['pos', 'neg']:
+    for posneg in ["pos", "neg"]:
         f_bc[posneg] = []
         rules = []
-        features[posneg] = []
+        #features[posneg] = []
 
         for bc in bottom_clauses[posneg]:
             
             local_variables = []
             current_rule = []
+            rules = []
 
             #literals = get_literals(bc)
             literals = bc[:]
@@ -94,10 +110,10 @@ def run_semi_prop(data_dir: str, arity: int, cached=False, print_output=False) -
             new_rule, features = build_first_order_features(rules, global_variables, features)
             f_bc[posneg].append(new_rule)
             del new_rule
-            break
-
+    
     with open(bc_file, 'w') as f:
         json.dump(f_bc, f, indent=4)
     
     with open(features_file, 'w') as f:
         json.dump(features, f, indent=4)
+    print('Finished')

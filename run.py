@@ -27,14 +27,15 @@ def main(args):
                  use_gpu=args.use_gpu,
                  use_semi_prop=args.use_semi_prop,
                  h_arity=args.h_arity)
+                 #sampling_rate=args.sampling_rate)
     model.init_data()
     #model.run_cv(args.trepan, args.draw)
 
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
-    PARSER.add_argument('--log-dir', nargs='?', default='logs/imdb')
-    PARSER.add_argument('--data-dir', nargs='?', default='datasets/imdb')
+    PARSER.add_argument('--log-dir', nargs='?', default='logs/debug')
+    PARSER.add_argument('--data-dir', nargs='?', default='datasets/debug')
     #PARSER.add_argument('--alpha', nargs='?', default='1e-5')
     #PARSER.add_argument('--laplacian-smooth', nargs='?', default=True)
     PARSER.add_argument('--no-cache', action='store_true')
@@ -44,8 +45,10 @@ if __name__ == '__main__':
     PARSER.add_argument('--dedup', action='store_true')
     PARSER.add_argument('--max-epochs', type=int, default=10)
     PARSER.add_argument('--n-splits', type=int, default=5)
-    PARSER.add_argument('--use-semi-prop', action='store_true') 
+    PARSER.add_argument('--use-semi-prop', action='store_false') 
     PARSER.add_argument('--h-arity', type=int, default=2)
+    #PARSER.add_argument('--test', action='store_true')
+    #PARSER.add_argument('--sampling-rate', type=int, default=100) 
 
     ARGS = PARSER.parse_args()
     main(ARGS)
