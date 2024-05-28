@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+python run.py --data-dir=datasets/imdb --log-dir=logs/imdb --use-semi-prop && python run.py --data-dir=datasets/uwcse --log-dir=logs/uwcse --use-semi-prop # && python run.py --data-dir=datasets/twitter --log-dir=logs/twitter --use-semi-prop

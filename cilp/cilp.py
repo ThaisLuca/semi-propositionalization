@@ -16,7 +16,7 @@ from tqdm import tqdm, trange
 from .bcp import run_bcp
 from .trepan import Trepan
 from .semi_prop import run_semi_prop
-from .utils import get_features, load_json, pjoin, save_params, to_numpy, mrmr
+from .utils import get_features, load_json, pjoin, save_params, to_numpy, mrmr, write_json
 
 
 def tng_step(data_loader, model, criterion, optimizer):
@@ -221,9 +221,6 @@ class CILP:
         if self.use_semi_prop:
             self.semi_prop()
         self.featurise()
-    
-    def test(self):
-        print('IT WORKED')
 
     def train(self, tng_idx, val_idx, with_trepan=False, draw=False):
         X_tng = self.X[tng_idx]
@@ -238,7 +235,7 @@ class CILP:
         y_pred = bnb.fit(X_tng, y_tng).predict_proba(X_val)
         metrics.update({'classes': bnb.classes_})
         metrics.update({'proba': y_pred})
-        print(len(y_val))
+        #print(len(y_val))
         metrics.update({'score': bnb.score(X_val, y_val)})
 
         return metrics
@@ -322,7 +319,8 @@ class CILP:
         return metrics
 
     def run_cv(self, with_trepan=False, draw=False):
-        cv_split = StratifiedShuffleSplit(n_splits=self.n_splits, test_size=0.3, random_state=0)
+        file_name = pjoin(self.data_dir, 'nb_probs.json')
+        cv_split = StratifiedShuffleSplit(n_splits=self.n_splits, test_size=0.2, random_state=0)
         # cv_split = StratifiedKFold(n_splits=n_splits, random_state=0, shuffle=True)
 
         split_metrics = defaultdict(list)
@@ -333,10 +331,11 @@ class CILP:
                 split_metrics[k].append(v)
 
         for k in split_metrics:
-            split_metrics[k] = np.stack(split_metrics[k])
+            split_metrics[k] = np.stack(split_metrics[k]).tolist()
 
-        params_id = save_params(self.log_dir, self.params)
-        np.savez(pjoin(self.log_dir, params_id), **split_metrics)
+        write_json(file_name, split_metrics)
+        #params_id = save_params(self.log_dir, self.params)
+        #np.savez(pjoin(self.log_dir, params_id), **split_metrics)
 
     def run_trepan(self):
         cv_split = StratifiedShuffleSplit(n_splits=1, test_size=0.3, random_state=0)
