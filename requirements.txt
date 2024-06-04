@@ -1,0 +1,6 @@
+sudo apt-get install python3-pip
+sudo apt-get install swi-prolog
+
+pip3 install pandas 
+pip3 install scikit-learn 
+pip3 install tqdm
