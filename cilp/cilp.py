@@ -4,13 +4,13 @@ from os import path as osp
 
 import numpy as np
 import scipy
-import torch
+#import torch
 from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
 from sklearn import tree
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from sklearn.model_selection import StratifiedShuffleSplit
-from torch import nn
-from torch.utils.data import DataLoader, TensorDataset
+#from torch import nn
+#from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm, trange
 
 from .bcp import run_bcp
@@ -38,7 +38,7 @@ def tng_step(data_loader, model, criterion, optimizer):
     return {'tng_loss': np.mean(tng_loss)}
 
 
-@torch.no_grad()
+#@torch.no_grad()
 def val_step(data_loader, model, criterion):
     model.eval()
     val_loss = []
@@ -78,7 +78,7 @@ def val_step(data_loader, model, criterion):
     return metrics
 
 
-class MLP(nn.Module):
+class MLP():
     def __init__(self, params):
         super().__init__()
 
@@ -116,7 +116,7 @@ class MLP(nn.Module):
         y = self.layers(x)
         return y
 
-    @torch.no_grad()
+    #@torch.no_grad()
     def predict(self, x):
         x = torch.FloatTensor(x)
         if self.is_cuda():
@@ -191,7 +191,7 @@ class CILP:
             bcp_features = npzfile['bcp_features']
         else:
             examples, bcp_features = get_features(bcp_examples, n_positives_examples, n_negative_examples)
-            examples = mrmr(examples, n_positives_examples, n_negative_examples, features_rate=0.1)
+            #examples = mrmr(examples, n_positives_examples, n_negative_examples, features_rate=0.1)
             np.savez(feats_file, examples=examples, bcp_features=bcp_features)
 
         self.bcp_features = bcp_features
