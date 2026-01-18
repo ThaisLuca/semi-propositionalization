@@ -24,6 +24,11 @@ def run_bcp(data_dir, cached=True, print_output=False):
         bk_file = pjoin(data_dir, 'bk.pl')
         mode_file = pjoin(data_dir, 'mode.pl')
 
+        #if posneg == "neg":
+        import math
+        pos_examples = pos_examples[:math.ceil(len(pos_examples)/3)]
+        print(len(pos_examples))
+
         #if test:
         #    split_index = math.floor(len(train_pos)*sampling_rate)
         #    train_pos, test_pos = train_pos[:split_index], train_pos[split_index:]
@@ -58,10 +63,10 @@ def run_bcp(data_dir, cached=True, print_output=False):
 
         if print_output:
             print(prolog_output)
-
+            
         bottom_clauses_raw = re.findall(r'\[bottom clause\]\n(.*?)\n\[literals\]', prolog_output,
                                         re.S)
-
+        
         for b in bottom_clauses_raw:
             clause = re.sub(r'[ \n]', '', b).split(':-')
             if len(clause) == 1:
